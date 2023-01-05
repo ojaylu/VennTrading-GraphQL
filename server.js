@@ -8,9 +8,7 @@ import { resolvers } from "./graphql/resolvers.js";
 import cors from 'cors';
 import cookieParser from "cookie-parser";
 import { encryptObj, decryptObj } from "./crypto.js";
-
-console.log(process.env.API_KEY);
-console.log(process.env.SECRET_KEY);
+import { db } from './firebase/config.js';
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -34,7 +32,7 @@ app.use(
   express.json(),
   expressMiddleware(server, {
     context: async ({ req }) => ({
-      cred: req.signedCookies["cred-token"] // && decryptObj(req.signedCookies["cred-token"])
+      cred: req.signedCookies["cred-token"] && decryptObj(req.signedCookies["cred-token"])
     })
   })
 );
@@ -57,6 +55,20 @@ app.get(
   "/check-cookie", (req, res) => {
     console.log(req.signedCookies) // && decryptObj(req.signedCookies["cred-token"]));
     res.end();
+  }
+)
+
+app.get(
+  "/symbols", async (_, res, next) => {
+    const day = new Date().getUTCDate();
+    const ref = db.doc(`exchanges/binance_symbol_5`); // ${day}`);
+    const doc = await ref.get();
+    if (!doc.exists) {
+      next(Error("cannot find document"));
+    } else {
+      console.log(doc.data());
+      res.send(doc.data());
+    }
   }
 )
 
