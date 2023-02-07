@@ -3,9 +3,27 @@ import { gql } from "apollo-server-express";
 export const typeDefs = gql`
   type Query {
     hello: String
+    userAssets: [AssetData]!
     orderBook(symbol: String!, limit: Int): OrderBook!
     tradeRecord(symbol: String!, limit: Int): [TradeRecord]!
     orderRecord(symbol: String!, limit: Int): [OrderRecord]!
+    userTradeRecord(symbol: String!): [UserTradeRecord]!
+    windowStats(symbol: String!, interval: String!): WindowStats!
+  }
+
+  type Mutation {
+    limitOrder(symbol: String!, side: String!, price: Float!, quantity: Float!, timeInForce: String!): TradeResponse!
+    marketOrder(symbol: String!, side: String!, quantity: Float!): TradeResponse!
+  }
+
+  type AssetData {
+    asset: String
+    free: String
+    locked: String
+    freeze: String
+    withdrawing: String
+    ipoable: String
+    btcValuation: String
   }
 
   type Order {
@@ -26,11 +44,40 @@ export const typeDefs = gql`
   }
 
   type OrderRecord {
+    orderId: Int
     price: String
     origQty: String
     executedQty: String
     type: String
     side: String
-    time: String
+    time: Float
+  }
+
+  type TradeResponse {
+    orderId: Int
+    transactionTime: Float
+  }
+
+  type UserTradeRecord {
+    id: Int
+    orderId: Int
+    price: String
+    qty: String
+    commission: String
+    commissionAsset: String
+    time: Float
+    isBuyer: Boolean
+    isMaker: Boolean
+  }
+
+  type WindowStats {
+    priceChange: String!
+    priceChangePercent: String!
+    weightedAvgPrice: String!
+    highPrice: String!
+    lowPrice: String!
+    lastPrice: String!
+    volume: String!
+    count: Float!
   }
 `;

@@ -8,8 +8,13 @@ import { resolvers } from "./graphql/resolvers.js";
 import cors from 'cors';
 import cookieParser from "cookie-parser";
 import { encryptObj, decryptObj } from "./crypto.js";
-import { db } from './firebase/config.js';
+import { db, auth } from './firebase/config.js';
+import { setCredentials } from './keysDbHandler.js';
+import * as dotenv from "dotenv";
+import { getSymbolTradePermissions } from './aws/dynamo.js';
+dotenv.config();
 
+// server 
 const app = express();
 const httpServer = http.createServer(app);
 const server = new ApolloServer({
@@ -18,22 +23,49 @@ const server = new ApolloServer({
   plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
 });
 
+function getDocName() {
+  const day = new Date().getUTCDate();
+  const docName = (process.env.TEST? "test_": "") + "binance_symbol" + "_5"; // `${day}`);
+  return docName;
+}
+
 await server.start();
+
+app.use(express.json());
 
 app.use(cors({
   origin: ["http://localhost:3000", "http://localhost:4000"],
   credentials: true
 }));
 
+// app.use((req, res) => {
+//   const idToken = req.get("X-Token");
+//   if (idToken) {
+//     auth.verifyIdToken(idToken)
+//     .then(decodedToken => {
+//       req.userUID = decodedToken.uid;
+//       next();
+//     })
+//     .catch(err => {
+//       res.status(401).send("Unauthorized");
+//     });
+//   } else {
+//     res.status(401).send("Not logged in");
+//   }
+// });
+
+app.get("/hi", (_, res) => {res.send("hi")});
+
 app.use(cookieParser("testing"));
 
 app.use(
   '/graphql',
-  express.json(),
   expressMiddleware(server, {
-    context: async ({ req }) => ({
+    context: async ({ req }) => {
+      console.log("descrypted:", req.signedCookies["cred-token"] && decryptObj(req.signedCookies["cred-token"]));
+      return ({
       cred: req.signedCookies["cred-token"] && decryptObj(req.signedCookies["cred-token"])
-    })
+    })}
   })
 );
 
@@ -60,13 +92,15 @@ app.get(
 
 app.get(
   "/symbols", async (_, res, next) => {
-    const day = new Date().getUTCDate();
-    const ref = db.doc(`exchanges/binance_symbol_5`); // ${day}`);
+    const docName = getDocName();
+    const ref = db.doc(`exchanges/${docName}`); // ${day}`);
     const doc = await ref.get();
     if (!doc.exists) {
       next(Error("cannot find document"));
     } else {
       console.log(doc.data());
+      const secToMidnight = Math.ceil(((new Date().setHours(24, 0, 0, 0)) - (new Date().getTime())) / 1000);
+      res.set("cache-control", `public, max-age=${secToMidnight}`);
       res.send(doc.data());
     }
   }
@@ -77,6 +111,38 @@ app.get(
     res.clearCookie("cred-token").send(JSON.stringify("cookie cleared"));
   }
 )
+
+app.post(
+  "/binance-keys", async (req, res) => {
+    try {
+      await setCredentials(req.userUID, req.body);
+      res.send("keys saved");
+    } catch(e) {
+      res.send("error with saving keys");
+    }
+  }
+)
+
+app.get(
+  "/symbols/:symbol", async (req, res, next) => {
+    const docName = getDocName();
+    console.log(docName, req.params.symbol);
+    getSymbolTradePermissions(docName, req.params.symbol)
+      .then(data => {
+        console.log("called");
+        const secToMidnight = Math.ceil(((new Date().setHours(24, 0, 0, 0)) - (new Date().getTime())) / 1000);
+        res.set("cache-control", `public, max-age=${secToMidnight}`);
+        res.send(JSON.stringify(data));
+      })
+      .catch(err => next(err));
+  }
+)
+
+app.get("/bebe", (req, res) => {
+  res.status(401);
+  res.set("WWW-Authenticate", "Basic realm=\"User Visible Realm\"");
+  res.end();
+})
 
 await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve));
 console.log(`🚀 Server ready at http://localhost:4000/graphql`);
