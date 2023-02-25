@@ -8,10 +8,11 @@ dotenv.config();
 const secret = process.env.KEY;
 
 // init db 
-const kvDb = levelup(leveldown("./keysDB"), );
+const kvDb = levelup(leveldown("./keysDB"));
 
 export async function getCredentials(userId) {
-    const encryptedCreds = await kvDb.get(userId, { asBuffer: false });
+    const key = process.env.TEST? "testing": userId;
+    const encryptedCreds = await kvDb.get(key, { asBuffer: false });
     const bytes = aes.decrypt(encryptedCreds, secret);
     const decryptedCreds = JSON.parse(bytes.toString(utf8));
     return decryptedCreds;
@@ -25,6 +26,6 @@ export async function setCredentials(userId, creds) {
 
 // (async function() {
 //     console.log("hihi");
-//     await setCredentials("2", {apiKey: "abe", apiSecret: "bcd"});
-//     console.log(await getCredentials("2"));
+//     await setCredentials("testing", {apiKey: "oSLErlkBYInpC86b36vRXVuaB0WdqvLpKTKUox0Xd3VSYTr9piVHtm7oqWmw9Wve", apiSecret: "JVhgRcKn5cETyMyzvA9ydRKqc0N9YPJ5mk39RUO1IahluHR637RYg4YKE2JEtkxJ"});
+//     console.log(await getCredentials("testing"));
 // })();

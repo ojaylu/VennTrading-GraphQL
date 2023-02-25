@@ -6,7 +6,6 @@ import http from 'http';
 import { typeDefs } from "./graphql/typeDefs.js";
 import { resolvers } from "./graphql/resolvers.js";
 import cors from 'cors';
-import cookieParser from "cookie-parser";
 import { encryptObj, decryptObj } from "./crypto.js";
 import { db, auth } from './firebase/config.js';
 import { setCredentials } from './keysDbHandler.js';
@@ -56,39 +55,16 @@ app.use(cors({
 
 app.get("/hi", (_, res) => {res.send("hi")});
 
-app.use(cookieParser("testing"));
-
 app.use(
   '/graphql',
   expressMiddleware(server, {
-    context: async ({ req }) => {
-      console.log("descrypted:", req.signedCookies["cred-token"] && decryptObj(req.signedCookies["cred-token"]));
-      return ({
-      cred: req.signedCookies["cred-token"] && decryptObj(req.signedCookies["cred-token"])
-    })}
+    // context: async ({ req }) => {
+    //   console.log("descrypted:", req.signedCookies["cred-token"] && decryptObj(req.signedCookies["cred-token"]));
+    //   return ({
+    //   cred: req.signedCookies["cred-token"] && decryptObj(req.signedCookies["cred-token"])
+    // })}
   })
 );
-
-app.get(
-  "/logged-in", (req, res) => {
-    console.log(req.signedCookies);
-    res.cookie("cred-token", encryptObj({
-      apiKey: process.env.API_KEY,
-      apiSecret: process.env.SECRET_KEY
-    }), {
-      httpOnly: true,
-      signed: true,
-      sameSite: "None"
-    }).send(JSON.stringify("cookie set"));
-  }
-);
-
-app.get(
-  "/check-cookie", (req, res) => {
-    console.log(req.signedCookies) // && decryptObj(req.signedCookies["cred-token"]));
-    res.end();
-  }
-)
 
 app.get(
   "/symbols", async (_, res, next) => {
@@ -137,12 +113,6 @@ app.get(
       .catch(err => next(err));
   }
 )
-
-app.get("/bebe", (req, res) => {
-  res.status(401);
-  res.set("WWW-Authenticate", "Basic realm=\"User Visible Realm\"");
-  res.end();
-})
 
 await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve));
 console.log(`🚀 Server ready at http://localhost:4000/graphql`);

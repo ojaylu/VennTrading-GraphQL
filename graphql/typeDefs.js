@@ -3,7 +3,7 @@ import { gql } from "apollo-server-express";
 export const typeDefs = gql`
   type Query {
     hello: String
-    userAssets: [AssetData]!
+    userAssets: AssetData!
     orderBook(symbol: String!, limit: Int): OrderBook!
     tradeRecord(symbol: String!, limit: Int): [TradeRecord]!
     orderRecord(symbol: String!, limit: Int): [OrderRecord]!
@@ -17,13 +17,19 @@ export const typeDefs = gql`
   }
 
   type AssetData {
+    assetList: [String]!
+    assets: [Assets]!
+  }
+
+  type Assets {
     asset: String
-    free: String
-    locked: String
-    freeze: String
-    withdrawing: String
-    ipoable: String
-    btcValuation: String
+    free: Float
+    locked: Float
+    freeze: Float
+    withdrawing: Float
+    ipoable: Float
+    btcValuation: Float
+    total: Float
   }
 
   type Order {
