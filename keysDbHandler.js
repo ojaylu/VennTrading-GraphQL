@@ -11,11 +11,17 @@ const secret = process.env.KEY;
 const kvDb = levelup(leveldown("./keysDB"));
 
 export async function getCredentials(userId) {
-    const key = process.env.TEST? "testing": userId;
-    const encryptedCreds = await kvDb.get(key, { asBuffer: false });
-    const bytes = aes.decrypt(encryptedCreds, secret);
-    const decryptedCreds = JSON.parse(bytes.toString(utf8));
-    return decryptedCreds;
+    const key = userId;
+    console.log("key: " + key);
+    try {
+        const encryptedCreds = await kvDb.get(key, { asBuffer: false });
+        const bytes = aes.decrypt(encryptedCreds, secret);
+        const decryptedCreds = JSON.parse(bytes.toString(utf8));
+        console.log("decryptedCreds: " + JSON.stringify(decryptedCreds))
+        return decryptedCreds;
+    } catch(e) {
+        throw new Error("error with saving keys");
+    }
 }
 
 // creds: {apiKey: String, apiSecret: String}
@@ -26,6 +32,6 @@ export async function setCredentials(userId, creds) {
 
 // (async function() {
 //     console.log("hihi");
-//     await setCredentials("testing", {apiKey: "oSLErlkBYInpC86b36vRXVuaB0WdqvLpKTKUox0Xd3VSYTr9piVHtm7oqWmw9Wve", apiSecret: "JVhgRcKn5cETyMyzvA9ydRKqc0N9YPJ5mk39RUO1IahluHR637RYg4YKE2JEtkxJ"});
+//     await setCredentials("testing", {key: "testing", secret: "testing"});
 //     console.log(await getCredentials("testing"));
 // })();

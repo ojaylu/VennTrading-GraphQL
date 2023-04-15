@@ -15,40 +15,46 @@ function binanceResponseHandler(promise) {
     return promise.then(res => res.data).catch(e => binanceErrorHandler(e));
 }
 
-function createClient(credentials) {
+async function createClient(uid) {
+    if(uid) {
+        const creds = await getCredentials(uid);
+        return new Spot(creds.key, creds.secret);
+    } else {
+        return new Spot();
+    }
     // if (process.env.TEST) {
     //     console.log("running on test");
     //     return new Spot(credentials.apiKey, credentials.apiSecret, { baseURL: 'https://testnet.binance.vision' });
     // } else {
-        return new Spot("vKkrps1o5Bze7dPP8vOpkm5ffJ7zGZfrzIVjAuWQTJ5XG3gRz4Xgbh24thM5eCHx", "zYhKhPF1NjXq4BaBkXt3EXYmkkYRj53CNFSadrSS2QoMqe12dZMTyhhP9ifOzPiE");
+        
         // return new Spot(apiKey, apiSecret);
     // }
 }
 
-export async function getAssetData() {
-    const credentials = getCredentials();
-    // const client = createClient(credentials);
-    // const assets = await binanceResponseHandler(client.userAsset()); // comment out when testing
-    const assets = [
-        {
-            "asset": "AVAX",
-            "free": "1",
-            "locked": "0",
-            "freeze": "0",
-            "withdrawing": "1",
-            "ipoable": "1",
-            "btcValuation": "0",
-        },
-        {
-            "asset": "BCH",
-            "free": "0.9",
-            "locked": "0",
-            "freeze": "0",
-            "withdrawing": "0.1",
-            "ipoable": "0.2",
-            "btcValuation": "0",
-        },
-    ]
+export async function getAssetData(uid) {
+    const credentials = getCredentials(uid);
+    const client = await createClient(credentials);
+    const assets = await binanceResponseHandler(client.userAsset()); // comment out when testing
+    // const assets = [
+    //     {
+    //         "asset": "AVAX",
+    //         "free": "1",
+    //         "locked": "0",
+    //         "freeze": "0",
+    //         "withdrawing": "1",
+    //         "ipoable": "1",
+    //         "btcValuation": "0",
+    //     },
+    //     {
+    //         "asset": "BCH",
+    //         "free": "0.9",
+    //         "locked": "0",
+    //         "freeze": "0",
+    //         "withdrawing": "0.1",
+    //         "ipoable": "0.2",
+    //         "btcValuation": "0",
+    //     },
+    // ]
     const assetList = assets.map(asset => asset.asset);
     const modifiedAssets = assets.map(asset => {
         const {asset: name, ...rest} = asset;
@@ -64,38 +70,38 @@ export async function getAssetData() {
     return {assetList, assets: modifiedAssets};
 }
 
-export function getOrderBook({ symbol, limit = 10 }) {
-    const client = createClient();
+export async function getOrderBook({ symbol, limit = 10 }) {
+    const client = await createClient();
     // const transformOrder = order => ({price: order[0], qty: order[1]});
     return binanceResponseHandler(client.depth(symbol, { limit }));
 };
 
-export function getTradeRecords({ symbol, limit = 20 }) {
-    const client = createClient();
+export async function getTradeRecords({ symbol, limit = 20 }) {
+    const client = await createClient();
     return binanceResponseHandler(client.trades(symbol, { limit }));
 }
 
-export function getOrderRecords({ symbol, limit = 50 }) {
+export async function getUserOrderRecords({ symbol, limit = 50 }, uid) {
     console.log("order called")
-    const client = createClient();
+    const client = await createClient(uid);
     return binanceResponseHandler(client.allOrders(symbol, { limit }));
 }
 
-export function getWindowStats({ symbol, interval }) {
-    console.log(interval)
-    const client = createClient();
+export async function getWindowStats({ symbol, interval }) {
+    console.log("window called: " + interval)
+    const client = await createClient();
     return binanceResponseHandler(client.rollingWindowTicker(symbol, [], { windowSize: interval }));
 }
 
-export function getUserTradeRecord({ symbol }) {
-    const client = createClient();
+export async function getUserTradeRecord({ symbol }, uid) {
+    const client = await createClient(uid);
     return binanceResponseHandler(client.myTrades(symbol));
 }
 
 // console.log(await getOrderBook("neobtc"));
 
-export function createLimitOrder({ symbol, side, price, quantity, timeInForce }) {
-    const client = createClient();
+export async function createLimitOrder({ symbol, side, price, quantity, timeInForce }, uid) {
+    const client = await createClient(uid);
     return binanceResponseHandler(client.newOrder(symbol, side, "LIMIT", {
         price,
         quantity,
@@ -103,8 +109,8 @@ export function createLimitOrder({ symbol, side, price, quantity, timeInForce })
     }));
 }
 
-export function createMarketOrder({ symbol, side, quantity }) {
-    const client = createClient();
+export async function createMarketOrder({ symbol, side, quantity }, uid) {
+    const client = await createClient(uid);
     return binanceResponseHandler(client.newOrder(symbol, side, "MARKET", {
         quantity
     }));
@@ -115,7 +121,7 @@ export function createMarketOrder({ symbol, side, quantity }) {
 
 // await createLimitOrder({ symbol: "btcusdt", side: "BUY", price: 1, quantity: 0.1, timeInForce: "GTC" })
 
-getAssetData({}).then(res => console.log(res)).catch(err => console.log(err))
+// getAssetData({}).then(res => console.log(res)).catch(err => console.log(err))
 // console.log("hihihihi", temp);
 
 // getTradeRecords("btcusdt", 10, {}).then(res => console.log(res))
