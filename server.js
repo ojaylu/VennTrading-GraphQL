@@ -46,25 +46,28 @@ app.use(cors({
 // })
 
 app.use(async(req, res, next) => {
-  console.log("called")
-  const idToken = req.get("X-Token");
-  if (idToken) {
-    if(idToken != "testing") {
-      const decodedToken = await auth.verifyIdToken(idToken)
-        .catch(err => {
-          console.log(err);
-          res.status(401).send("Unauthorized");
-        });
-      console.log(decodedToken.uid)
-      req.uid = decodedToken.uid;
-      console.log(req.body);
-    } else {
-      req.uid = "testing";
-    }
-    next();
-  } else {
-    res.status(401).send("Not logged in");
-  }
+  // console.log("called")
+  // const idToken = req.get("X-Token");
+  // if (idToken) {
+  //   if(idToken != "testing") {
+  //     const decodedToken = await auth.verifyIdToken(idToken)
+  //       .catch(err => {
+  //         console.log(err);
+  //         res.status(401).send("Unauthorized");
+  //       });
+  //     console.log(decodedToken.uid)
+  //     req.uid = decodedToken.uid;
+  //     console.log(req.body);
+  //   } else {
+  //     req.uid = "testing";
+  //   }
+  //   next();
+  // } else {
+  //   res.status(401).send("Not logged in");
+  // }
+
+  req.uid = "bWll0qr79mYQv06Nu58WYbT3ZYy2"
+  next();
 });
 
 

@@ -32,8 +32,7 @@ async function createClient(uid) {
 }
 
 export async function getAssetData(uid) {
-    const credentials = getCredentials(uid);
-    const client = await createClient(credentials);
+    const client = await createClient(uid);
     const assets = await binanceResponseHandler(client.userAsset()); // comment out when testing
     // const assets = [
     //     {
@@ -127,3 +126,4 @@ export async function createMarketOrder({ symbol, side, quantity }, uid) {
 // getTradeRecords("btcusdt", 10, {}).then(res => console.log(res))
 
 // getWindowStats("BTCUSDT", "1d", {}).then(res => console.log(res));
+getAssetData("bWll0qr79mYQv06Nu58WYbT3ZYy2").then(data => console.log(data));

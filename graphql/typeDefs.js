@@ -50,7 +50,7 @@ export const typeDefs = gql`
   }
 
   type OrderRecord {
-    orderId: Int
+    orderId: Float
     price: String
     origQty: String
     executedQty: String
@@ -60,13 +60,13 @@ export const typeDefs = gql`
   }
 
   type TradeResponse {
-    orderId: Int
+    orderId: Float
     transactionTime: Float
   }
 
   type UserTradeRecord {
-    id: Int
-    orderId: Int
+    id: Float
+    orderId: Float
     price: String
     qty: String
     commission: String

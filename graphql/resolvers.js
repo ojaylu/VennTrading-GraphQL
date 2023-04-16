@@ -21,8 +21,8 @@ export const resolvers = {
       tradeRecord: async (_, args) => {
         return await getTradeRecords(args);
       },
-      orderRecord: async (_, args) => {
-        return await getUserOrderRecords(args);
+      orderRecord: async (_, args, { uid }) => {
+        return await getUserOrderRecords(args, uid);
       },
       userTradeRecord: async (_, args, { uid }) => {
         return await getUserTradeRecord(args, uid);
