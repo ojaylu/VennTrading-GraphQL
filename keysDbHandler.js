@@ -32,6 +32,6 @@ export async function setCredentials(userId, creds) {
 
 // (async function() {
 //     console.log("hihi");
-//     await setCredentials("testing", {key: "testing", secret: "testing"});
-//     console.log(await getCredentials("testing"));
+//     // await setCredentials("bWll0qr79mYQv06Nu58WYbT3ZYy2", {key: "testing", secret: "testing"});
+//     console.log(await getCredentials("bWll0qr79mYQv06Nu58WYbT3ZYy2"));
 // })();

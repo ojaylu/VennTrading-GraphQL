@@ -9,6 +9,7 @@ import cors from 'cors';
 import { encryptObj, decryptObj } from "./crypto.js";
 import { db, auth } from './firebase/config.js';
 import { getCredentials, setCredentials } from './keysDbHandler.js';
+import axios from "axios";
 import * as dotenv from "dotenv";
 import { getSymbolInfo, getSymbols } from "./cyclic.js";
 // import { chooseContentTypeForSingleResultResponse } from '@apollo/server/dist/esm/ApolloServer.js';
@@ -46,28 +47,25 @@ app.use(cors({
 // })
 
 app.use(async(req, res, next) => {
-  // console.log("called")
-  // const idToken = req.get("X-Token");
-  // if (idToken) {
-  //   if(idToken != "testing") {
-  //     const decodedToken = await auth.verifyIdToken(idToken)
-  //       .catch(err => {
-  //         console.log(err);
-  //         res.status(401).send("Unauthorized");
-  //       });
-  //     console.log(decodedToken.uid)
-  //     req.uid = decodedToken.uid;
-  //     console.log(req.body);
-  //   } else {
-  //     req.uid = "testing";
-  //   }
-  //   next();
-  // } else {
-  //   res.status(401).send("Not logged in");
-  // }
-
-  req.uid = "bWll0qr79mYQv06Nu58WYbT3ZYy2"
-  next();
+  console.log("called")
+  const idToken = req.get("X-Token");
+  if (idToken) {
+    if(idToken != "testing") {
+      const decodedToken = await auth.verifyIdToken(idToken)
+        .catch(err => {
+          console.log(err);
+          res.status(401).send("Unauthorized");
+        });
+      console.log(decodedToken.uid)
+      req.uid = decodedToken.uid;
+      console.log(req.body);
+    } else {
+      req.uid = "rMIBqEDPQfcowg88aecQds4ZqlD2";
+    }
+    next();
+  } else {
+    res.status(401).send("Not logged in");
+  }
 });
 
 
@@ -220,6 +218,34 @@ app.delete("/trading-bot/:id", async(req, res) => {
   });
   console.log(status);
   res.json(status);
+})
+
+app.get("/trading-bot/:id", async(req, res, next) => {
+  const response = await axios({
+    url: `http://localhost:8080/trading-bot/${req.uid}_${req.params.id}`,
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    data: {
+      symbol: req.query.symbol,
+      interval: req.query.interval
+    }
+  }).then(response => response.data).catch(e => {
+    console.log(e.response.data);
+    next(e);
+  })
+
+  if(response.status == "no bot") {
+    const field = `${req.params.id}.running`;
+    await db.collection("users").doc(req.uid).update({
+      [field]: false
+    });
+    res.json(response);
+  } else {
+    console.log(response);
+    res.json(response);
+  }
 })
 
 await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve));
