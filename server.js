@@ -145,6 +145,13 @@ app.get(
 
 app.get(
   "/binance-keys", async(req, res, next) => {
+    const docRef = db.collection("users").doc(req.uid);
+    const docSnapshot = await docRef.get();
+    console.log("doc exists: " + JSON.stringify(docSnapshot.exists));
+    if(!docSnapshot.exists) {
+      console.log("doesnt exist")
+      await docRef.set({});
+    }
     try {
       console.log("called ")
       await getCredentials(req.uid);
